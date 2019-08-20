@@ -1,71 +1,79 @@
 import * as React from "react";
-import { initializeIcons } from "office-ui-fabric-react/lib/Icons";
-import { FontWeights } from "@uifabric/styling";
 import { Card, ICardItemTokens, ICardTokens } from "@uifabric/react-cards";
 import {
-  ActionButton,
-  IButtonStyles,
-  Icon,
-  IIconStyles,
-  Image,
+  initializeIcons,
+  FontWeights,
+  mergeStyleSets,
+  FontSizes,
+  ColorClassNames,
   Persona,
+  PersonaSize,
   Stack,
   IStackTokens,
   Text,
-  ITextStyles
+  ITextStyles,
+  Sticky,
+  StickyPositionType,
+  Nav,
+  INavLink,
+  ITheme,
+  createTheme
 } from "office-ui-fabric-react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-import { Nav, INavLink } from "office-ui-fabric-react/lib/Nav";
 
 initializeIcons(undefined, { disableWarnings: true });
 
 export interface IBusinessProcessProps {}
 
 export function BusinessProcess() {
-  const siteTextStyles = {
-    root: {
-      color: "#025F52",
-      fontWeight: FontWeights.semibold
-    }
-  };
-  const descriptionTextStyles = {
-    root: {
+  const styles = mergeStyleSets({
+    headerText: {
+      fontWeight: FontWeights.semibold,
+      fontSize: FontSizes.medium
+    },
+    descriptionText: {
       color: "#333333",
       fontWeight: FontWeights.regular
-    }
-  };
-  const helpfulTextStyles = {
-    root: {
-      color: "#333333",
-      fontWeight: FontWeights.regular
-    }
-  };
-  const iconStyles = {
-    root: {
+    },
+    icon: {
       color: "#0078D4",
       fontSize: 16,
       fontWeight: FontWeights.regular
-    }
-  };
-  const footerCardSectionStyles = {
-    root: {
+    },
+    cardFooter: {
       borderLeft: "1px solid #F3F2F1"
-    }
-  };
-
-  const sectionStackTokens = { childrenGap: 20, padding: 10 };
-  const containerStackTokens = { padding: 5 };
-  const cardTokens = {
-    childrenMargin: 12
-  };
-  const footerCardSectionTokens = { padding: "0px 0px 0px 12px" };
-  const businessProcessStageStyles = {
-    root: {
+    },
+    businessProcessStage: {
       padding: 10,
       fontWeight: FontWeights.semibold,
-      background: "#8764b8",
-      color: "#fcfcfc"
+      background: "#0078D4",
+      color: "#fcfcfc",
+      boxShadow: "0 0 20px rgba(0, 0, 0, .2)",
+      display: "block",
+      width: "inherit"
+    },
+    persona: {
+      padding: 5
+    },
+    sticky: {
+      width: 300
     }
+  });
+  const theme: ITheme = createTheme({});
+
+  const sectionStackTokens = {
+    childrenGap: 20,
+    padding: 10,
+    background: theme.palette.themePrimary
+  };
+  const containerStackTokens = { padding: 5 };
+  const cardTokens = {
+    childrenMargin: 12,
+    minWidth: 200,
+    width: 300,
+    maxWidth: 400,
+    padding: 20,
+    boxShadow: "0 0 20px rgba(0, 0, 0, .2)"
   };
 
   const alertClicked = () => {
@@ -75,74 +83,14 @@ export function BusinessProcess() {
   return (
     <Stack horizontal tokens={containerStackTokens}>
       <Stack tokens={sectionStackTokens}>
-        <Nav
-          selectedKey="key3"
-          expandButtonAriaLabel="Expand or collapse"
-          selectedAriaLabel="Selected"
-          styles={{
-            root: {
-              width: 208,
-              height: 350,
-              boxSizing: "border-box",
-              border: "1px solid #eee",
-              overflowY: "auto"
-            }
-          }}
-          groups={[
-            {
-              links: [
-                {
-                  name: "Case",
-                  url: "http://example.com",
-                  links: [
-                    {
-                      name: "Phonecall to Case Process",
-                      url: "http://msn.com",
-                      key: "key1",
-                      target: "_blank"
-                    },
-                    {
-                      name: "Case Escalation Process",
-                      url: "http://msn.com",
-                      disabled: true,
-                      key: "key2",
-                      target: "_blank"
-                    }
-                  ],
-                  isExpanded: true
-                },
-                {
-                  name: "Lead",
-                  url: "http://cnn.com",
-                  key: "key7",
-                  target: "_blank",
-                  links: [
-                    {
-                      name: "Qualify Lead Process",
-                      url: "http://msn.com",
-                      key: "key1",
-                      target: "_blank",
-                      isExpanded: true
-                    },
-                    {
-                      name: "Lead to Opportunity Process",
-                      url: "http://msn.com",
-                      disabled: true,
-                      key: "key2",
-                      target: "_blank"
-                    }
-                  ],
-                  isExpanded: true
-                }
-              ]
-            }
-          ]}
-        />
-      </Stack>
-      <Stack tokens={sectionStackTokens}>
-        <Text variant="medium" styles={businessProcessStageStyles}>
-          Stage 1
-        </Text>
+        <Sticky
+          stickyPosition={StickyPositionType.Header}
+          stickyClassName={styles.sticky}
+        >
+          <Text variant="medium" className={styles.businessProcessStage}>
+            Stage 1
+          </Text>
+        </Sticky>
         <DragDropContext onDragEnd={x => true}>
           <Droppable droppableId="droppable">
             {provided => (
@@ -154,22 +102,21 @@ export function BusinessProcess() {
                       {...provided.draggableProps}
                       {...provided.dragHandleProps}
                     >
-                      <Card compact onClick={alertClicked} tokens={cardTokens}>
-                        <Card.Section>
-                          <Text variant="small" styles={siteTextStyles}>
-                            Contoso
-                          </Text>
-                          <Text styles={descriptionTextStyles}>Item A</Text>
-                        </Card.Section>
-                        <Card.Section
-                          styles={footerCardSectionStyles}
-                          tokens={footerCardSectionTokens}
-                        >
-                          <Icon
-                            iconName="NavigateForward"
-                            styles={iconStyles}
+                      <Card onClick={alertClicked} tokens={cardTokens}>
+                        <Card.Section fill>
+                          <Persona
+                            text={"Natraj Yegnaraman"}
+                            size={PersonaSize.extraSmall}
+                            className={styles.persona}
                           />
-                          <Icon iconName="NavigateBack" styles={iconStyles} />
+                          <Stack grow horizontal>
+                            <Text variant="small" className={styles.headerText}>
+                              Contoso
+                            </Text>
+                            <Text className={styles.descriptionText}>
+                              62 days
+                            </Text>
+                          </Stack>
                         </Card.Section>
                       </Card>
                     </div>
@@ -179,61 +126,6 @@ export function BusinessProcess() {
             )}
           </Droppable>
         </DragDropContext>
-      </Stack>
-      <Stack tokens={sectionStackTokens}>
-        <Text variant="medium" styles={businessProcessStageStyles}>
-          Stage 2
-        </Text>
-        <Card compact onClick={alertClicked} tokens={cardTokens}>
-          <Card.Section>
-            <Text variant="small" styles={siteTextStyles}>
-              Contoso
-            </Text>
-            <Text styles={descriptionTextStyles}>Item B</Text>
-          </Card.Section>
-          <Card.Section
-            styles={footerCardSectionStyles}
-            tokens={footerCardSectionTokens}
-          >
-            <Icon iconName="NavigateBack" styles={iconStyles} />
-            <Icon iconName="NavigateForward" styles={iconStyles} />
-          </Card.Section>
-        </Card>
-      </Stack>
-      <Stack tokens={sectionStackTokens}>
-        <Text variant="medium" styles={businessProcessStageStyles}>
-          Stage 3
-        </Text>
-        <Card compact onClick={alertClicked} tokens={cardTokens}>
-          <Card.Section>
-            <Text variant="small" styles={siteTextStyles}>
-              Contoso
-            </Text>
-            <Text styles={descriptionTextStyles}>Item C</Text>
-          </Card.Section>
-          <Card.Section
-            styles={footerCardSectionStyles}
-            tokens={footerCardSectionTokens}
-          >
-            <Icon iconName="NavigateForward" styles={iconStyles} />
-            <Icon iconName="NavigateBack" styles={iconStyles} />
-          </Card.Section>
-        </Card>
-        <Card compact onClick={alertClicked} tokens={cardTokens}>
-          <Card.Section>
-            <Text variant="small" styles={siteTextStyles}>
-              Acme
-            </Text>
-            <Text styles={descriptionTextStyles}>Item D</Text>
-          </Card.Section>
-          <Card.Section
-            styles={footerCardSectionStyles}
-            tokens={footerCardSectionTokens}
-          >
-            <Icon iconName="NavigateForward" styles={iconStyles} />
-            <Icon iconName="NavigateBack" styles={iconStyles} />
-          </Card.Section>
-        </Card>        
       </Stack>
     </Stack>
   );
