@@ -1,21 +1,16 @@
 import * as React from "react";
-import { Card, ICardItemTokens, ICardTokens } from "@uifabric/react-cards";
+import { Card, ICardTokens } from "@uifabric/react-cards";
 import {
   initializeIcons,
   FontWeights,
   mergeStyleSets,
-  FontSizes,
-  ColorClassNames,
   Persona,
   PersonaSize,
   Stack,
   IStackTokens,
   Text,
-  ITextStyles,
   Sticky,
   StickyPositionType,
-  Nav,
-  INavLink,
   ITheme,
   createTheme
 } from "office-ui-fabric-react";
@@ -23,17 +18,18 @@ import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 initializeIcons(undefined, { disableWarnings: true });
 
-export interface IBusinessProcessProps {}
+export interface IBusinessProcessProps {
+  businessProcessName: string;
+  businessProcessStages: string[];
+}
 
-export function BusinessProcess() {
+export function BusinessProcess(props: IBusinessProcessProps) {
   const styles = mergeStyleSets({
     headerText: {
-      fontWeight: FontWeights.semibold,
-      fontSize: FontSizes.medium
+      fontWeight: FontWeights.semibold
     },
     descriptionText: {
-      color: "#333333",
-      fontWeight: FontWeights.regular
+      color: "#333333"
     },
     icon: {
       color: "#0078D4",
@@ -50,24 +46,29 @@ export function BusinessProcess() {
       color: "#fcfcfc",
       boxShadow: "0 0 20px rgba(0, 0, 0, .2)",
       display: "block",
-      width: "inherit"
+      width: "inherit",
+      textAlign: "center"
     },
     persona: {
       padding: 5
     },
-    sticky: {
-      width: 300
+    sticky: {},
+    footerStyle: {
+      borderLeft: "5px solid rgb(0, 120, 212)"
+    },
+    cardStyle: {
+      marginBottom: 20
     }
   });
   const theme: ITheme = createTheme({});
 
-  const sectionStackTokens = {
+  const sectionStackTokens: IStackTokens = {
     childrenGap: 20,
-    padding: 10,
-    background: theme.palette.themePrimary
+    padding: 10
   };
-  const containerStackTokens = { padding: 5 };
-  const cardTokens = {
+  const containerStackTokens: IStackTokens = { padding: 5 };
+
+  const cardTokens: ICardTokens = {
     childrenMargin: 12,
     minWidth: 200,
     width: 300,
@@ -76,57 +77,75 @@ export function BusinessProcess() {
     boxShadow: "0 0 20px rgba(0, 0, 0, .2)"
   };
 
+  const footerStackTokens: IStackTokens = {
+    childrenGap: 50,
+    padding: 10
+  };
+
   const alertClicked = () => {
     alert("Clicked");
   };
 
   return (
     <Stack horizontal tokens={containerStackTokens}>
-      <Stack tokens={sectionStackTokens}>
-        <Sticky
-          stickyPosition={StickyPositionType.Header}
-          stickyClassName={styles.sticky}
-        >
-          <Text variant="medium" className={styles.businessProcessStage}>
-            Stage 1
-          </Text>
-        </Sticky>
-        <DragDropContext onDragEnd={x => true}>
-          <Droppable droppableId="droppable">
-            {provided => (
-              <div ref={provided.innerRef} {...provided.droppableProps}>
-                <Draggable key={1} draggableId={"1"} index={1}>
-                  {(provided, snapshot) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      {...provided.dragHandleProps}
-                    >
-                      <Card onClick={alertClicked} tokens={cardTokens}>
-                        <Card.Section fill>
-                          <Persona
-                            text={"Natraj Yegnaraman"}
-                            size={PersonaSize.extraSmall}
-                            className={styles.persona}
-                          />
-                          <Stack grow horizontal>
-                            <Text variant="small" className={styles.headerText}>
-                              Contoso
-                            </Text>
-                            <Text className={styles.descriptionText}>
-                              62 days
-                            </Text>
-                          </Stack>
-                        </Card.Section>
-                      </Card>
-                    </div>
-                  )}
-                </Draggable>
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
-      </Stack>
+      {props.businessProcessStages.map(stageName => (
+        <Stack tokens={sectionStackTokens}>
+          <Sticky
+            stickyPosition={StickyPositionType.Header}
+            stickyClassName={styles.sticky}
+          >
+            <Text variant="mediumPlus" className={styles.businessProcessStage}>
+              {stageName}
+            </Text>
+          </Sticky>
+          <DragDropContext onDragEnd={x => true}>
+            <Droppable droppableId="droppable">
+              {provided => (
+                <div ref={provided.innerRef} {...provided.droppableProps}>
+                  <Draggable key={1} draggableId={"1"} index={1}>
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                      >
+                        <Card onClick={alertClicked} tokens={cardTokens}>
+                          <Card.Section fill>
+                            <Persona
+                              text={"Natraj Yegnaraman"}
+                              size={PersonaSize.extraSmall}
+                              className={styles.persona}
+                            />
+                            <Stack
+                              grow
+                              horizontal
+                              tokens={footerStackTokens}
+                              className={styles.footerStyle}
+                            >
+                              <Text
+                                variant="mediumPlus"
+                                className={styles.headerText}
+                              >
+                                Contoso
+                              </Text>
+                              <Text
+                                variant="mediumPlus"
+                                className={styles.descriptionText}
+                              >
+                                62 days
+                              </Text>
+                            </Stack>
+                          </Card.Section>
+                        </Card>
+                      </div>
+                    )}
+                  </Draggable>
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
+        </Stack>
+      ))}
     </Stack>
   );
 }
