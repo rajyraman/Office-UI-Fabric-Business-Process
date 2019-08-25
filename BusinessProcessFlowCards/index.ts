@@ -43,28 +43,54 @@ export class BusinessProcessFlowCards
 
     this._props.businessProcessName =
       context.parameters.businessProcessName.raw;
-    
+
     context.webAPI
       .retrieveMultipleRecords(
         "workflow",
-        `?$select=clientdata&$filter=category eq 4 and type eq 1 and  uniquename eq '${
-          this._props.businessProcessName
-        }'`
+        `?$select=clientdata&$filter=category eq 4 and type eq 1 and  uniquename eq '${this._props.businessProcessName}'`
       )
       .then(w => {
         console.log(w);
         if (w.entities.length == 0) return;
         this._props.businessProcessStages = JSONPath.query(
-          w.entities[0]["clientdata"],
+          JSON.parse(w.entities[0]["clientdata"]),
           "$.steps.list[*].steps.list[*].stepLabels.list[*].description"
         );
         console.log(this._props.businessProcessStages);
+        ReactDOM.render(
+          React.createElement(BusinessProcess, this._props),
+          this._container
+        );
+      })
+      .then(w => {
+        fetch(
+          `/api/data/v9.1/EntityDefinitions(LogicalName='${context.parameters.sampleDataSet.getTargetEntityType()}')`,
+          { credentials: "include", method: "GET", mode: "cors" }
+        )
+          .then(r => r.json())
+          .then(r => r.PrimaryIdAttribute)
+          .then(r => {
+		// 	context.parameters.sampleDataSet.sortedRecordIds.forEach(r=>{
+		// 		context.webAPI
+		// 		.retrieveMultipleRecords(this._props.businessProcessName, 
+		// 	})
+		// 	<fetch>
+		// 	<entity name="new_testentitytestflow" >
+		// 	  <attribute name="activestageid" />
+		// 	  <attribute name="bpf_duration" />
+		// 	  <attribute name="createdon" />
+		// 	  <attribute name="activestagestartedon" />
+		// 	  <filter>
+		// 		<condition attribute="bpf_ryr_testentityid" operator="in" >
+		// 		  <value>c204773c-0969-e811-a95d-000d3ae0575b</value>
+		// 		  <value>67523658-1433-e911-a854-000d3ae0a6cf</value>
+		// 		  <value>90640953-9d3b-e911-a84b-000d3ae0b82e</value>
+		// 		</condition>
+		// 	  </filter>
+		// 	</entity>
+		//   </fetch>			
+		  });
       });
-
-    ReactDOM.render(
-      React.createElement(BusinessProcess, this._props),
-      this._container
-    );
   }
 
   /**

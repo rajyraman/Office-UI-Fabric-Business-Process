@@ -14,7 +14,6 @@ import {
   ITheme,
   createTheme
 } from "office-ui-fabric-react";
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 initializeIcons(undefined, { disableWarnings: true });
 
@@ -98,52 +97,35 @@ export function BusinessProcess(props: IBusinessProcessProps) {
               {stageName}
             </Text>
           </Sticky>
-          <DragDropContext onDragEnd={x => true}>
-            <Droppable droppableId="droppable">
-              {provided => (
-                <div ref={provided.innerRef} {...provided.droppableProps}>
-                  <Draggable key={1} draggableId={"1"} index={1}>
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                      >
-                        <Card onClick={alertClicked} tokens={cardTokens}>
-                          <Card.Section fill>
-                            <Persona
-                              text={"Natraj Yegnaraman"}
-                              size={PersonaSize.extraSmall}
-                              className={styles.persona}
-                            />
-                            <Stack
-                              grow
-                              horizontal
-                              tokens={footerStackTokens}
-                              className={styles.footerStyle}
-                            >
-                              <Text
-                                variant="mediumPlus"
-                                className={styles.headerText}
-                              >
-                                Contoso
-                              </Text>
-                              <Text
-                                variant="mediumPlus"
-                                className={styles.descriptionText}
-                              >
-                                62 days
-                              </Text>
-                            </Stack>
-                          </Card.Section>
-                        </Card>
-                      </div>
-                    )}
-                  </Draggable>
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
+          <div>
+            <div>
+              <Card onClick={alertClicked} tokens={cardTokens}>
+                <Card.Section fill>
+                  <Persona
+                    text={"Natraj Yegnaraman"}
+                    size={PersonaSize.extraSmall}
+                    className={styles.persona}
+                  />
+                  <Stack
+                    grow
+                    horizontal
+                    tokens={footerStackTokens}
+                    className={styles.footerStyle}
+                  >
+                    <Text variant="mediumPlus" className={styles.headerText}>
+                      Contoso
+                    </Text>
+                    <Text
+                      variant="mediumPlus"
+                      className={styles.descriptionText}
+                    >
+                      62 days
+                    </Text>
+                  </Stack>
+                </Card.Section>
+              </Card>
+            </div>
+          </div>
         </Stack>
       ))}
     </Stack>

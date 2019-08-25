@@ -7,7 +7,7 @@
     "clean": "pcf-scripts clean",
     "rebuild": "pcf-scripts rebuild",
     "start": "pcf-scripts start",
-    "prod": "pcf-scripts build --noColor --buildMode production"
+    "prod": "pcf-scripts build --buildMode production"
   },
   "dependencies": {
     "@types/node": "^10.12.18",
@@ -16,7 +16,6 @@
     "jsonpath": "^1.0.2",
     "office-ui-fabric-react": "^7.25.0",
     "react": "^16.9.0",
-    "react-beautiful-dnd": "^11.0.5",
     "react-dom": "^16.9.0"
   },
   "devDependencies": {
