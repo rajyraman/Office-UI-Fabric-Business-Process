@@ -14,14 +14,30 @@ import {
   ITheme,
   createTheme
 } from "office-ui-fabric-react";
+// @ts-ignore
+import TimeAgo from "timeago-react";
 
 initializeIcons(undefined, { disableWarnings: true });
 
 export interface IBusinessProcessProps {
-  businessProcessName: string;
-  businessProcessStages: string[];
+  businessProcessName: string | null;
+  businessProcessStages: IBusinessProcessStage[];
+  records: IBPFRecord[];
+  triggerNavigate?: (id: string) => void;
 }
-
+export interface IBusinessProcessStage {
+  labelId: string;
+  languageCode: string;
+  description: string;
+}
+export interface IBPFRecord {
+  activeStageId: string;
+  activeStageName: string;
+  activeStageStartedOn: Date;
+  recordName: string;
+  createdBy: string;
+  recordId: string;
+}
 export function BusinessProcess(props: IBusinessProcessProps) {
   const styles = mergeStyleSets({
     headerText: {
@@ -46,7 +62,8 @@ export function BusinessProcess(props: IBusinessProcessProps) {
       boxShadow: "0 0 20px rgba(0, 0, 0, .2)",
       display: "block",
       width: "inherit",
-      textAlign: "center"
+      textAlign: "center",
+      minWidth: 300
     },
     persona: {
       padding: 5
@@ -55,11 +72,16 @@ export function BusinessProcess(props: IBusinessProcessProps) {
     footerStyle: {
       borderLeft: "5px solid rgb(0, 120, 212)"
     },
+    stackStyles: {
+      paddingTop: 10,
+      paddingBottom: 10,
+      overflow: "auto",
+      alignItems: "center"
+    },
     cardStyle: {
       marginBottom: 20
     }
   });
-  const theme: ITheme = createTheme({});
 
   const sectionStackTokens: IStackTokens = {
     childrenGap: 20,
@@ -81,50 +103,65 @@ export function BusinessProcess(props: IBusinessProcessProps) {
     padding: 10
   };
 
-  const alertClicked = () => {
-    alert("Clicked");
+  const cardClicked = (ev: React.MouseEvent<HTMLElement>): void => {
+    if (props.triggerNavigate) {
+      props.triggerNavigate(ev.currentTarget.id);
+    }
   };
 
   return (
     <Stack horizontal tokens={containerStackTokens}>
-      {props.businessProcessStages.map(stageName => (
-        <Stack tokens={sectionStackTokens}>
+      {props.businessProcessStages.map(stage => (
+        <Stack
+          tokens={sectionStackTokens}
+          id={stage.labelId}
+          key={stage.labelId}
+          className={styles.stackStyles}
+        >
           <Sticky
             stickyPosition={StickyPositionType.Header}
             stickyClassName={styles.sticky}
           >
             <Text variant="mediumPlus" className={styles.businessProcessStage}>
-              {stageName}
+              {stage.description}
             </Text>
           </Sticky>
           <div>
-            <div>
-              <Card onClick={alertClicked} tokens={cardTokens}>
-                <Card.Section fill>
-                  <Persona
-                    text={"Natraj Yegnaraman"}
-                    size={PersonaSize.extraSmall}
-                    className={styles.persona}
-                  />
-                  <Stack
-                    grow
-                    horizontal
-                    tokens={footerStackTokens}
-                    className={styles.footerStyle}
-                  >
-                    <Text variant="mediumPlus" className={styles.headerText}>
-                      Contoso
-                    </Text>
-                    <Text
-                      variant="mediumPlus"
-                      className={styles.descriptionText}
+            {props.records
+              .filter(r => r.activeStageId == stage.labelId)
+              .map(r => (
+                <Card
+                  tokens={cardTokens}
+                  id={r.recordId}
+                  key={r.recordId}
+                  onClick={cardClicked}
+                  className={styles.cardStyle}
+                >
+                  <Card.Section fill>
+                    <Persona
+                      text={r.createdBy}
+                      size={PersonaSize.extraSmall}
+                      className={styles.persona}
+                    />
+                    <Stack
+                      grow
+                      horizontal
+                      tokens={footerStackTokens}
+                      className={styles.footerStyle}
                     >
-                      62 days
-                    </Text>
-                  </Stack>
-                </Card.Section>
-              </Card>
-            </div>
+                      <Text variant="medium" className={styles.headerText}>
+                        {r.recordName}
+                      </Text>
+                      <Text
+                        variant="smallPlus"
+                        className={styles.descriptionText}
+                      >
+                        <TimeAgo datetime={r.activeStageStartedOn} />
+                      </Text>
+                    </Stack>
+                  </Card.Section>
+                </Card>
+              ))}
           </div>
         </Stack>
       ))}

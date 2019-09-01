@@ -1,7 +1,12 @@
 import { IInputs, IOutputs } from "./generated/ManifestTypes";
 import DataSetInterfaces = ComponentFramework.PropertyHelper.DataSetApi;
 type DataSet = ComponentFramework.PropertyTypes.DataSet;
-import { BusinessProcess, IBusinessProcessProps } from "./BusinessProcess";
+import {
+  BusinessProcess,
+  IBusinessProcessProps,
+  IBusinessProcessStage,
+  IBPFRecord
+} from "./BusinessProcess";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as JSONPath from "jsonpath";
@@ -12,8 +17,17 @@ export class BusinessProcessFlowCards
   private _context: ComponentFramework.Context<IInputs>;
   private _props: IBusinessProcessProps = {
     businessProcessName: "",
-    businessProcessStages: []
+    businessProcessStages: [],
+    records: []
   };
+  private _bpfLinkingAttributeName: string;
+
+  private navigateToRecord(id: string): void {
+    this._context.navigation.openForm({
+      entityName: this._context.parameters.sampleDataSet.getTargetEntityType(),
+      entityId: id
+    });
+  }
 
   /**
    * Used to initialize the control instance. Controls can kick off remote server calls and other initialization actions here.
@@ -31,6 +45,53 @@ export class BusinessProcessFlowCards
   ) {
     this._container = container;
     this._context = context;
+    this._props.businessProcessName =
+      context.parameters.businessProcessName.raw;
+    this._props.triggerNavigate = this.navigateToRecord.bind(this);
+
+    context.utils
+      .getEntityMetadata(context.parameters.sampleDataSet.getTargetEntityType())
+      .then(r => {
+        this._bpfLinkingAttributeName = r.IsCustomEntity
+          ? `bpf_${r.PrimaryIdAttribute}`
+          : r.PrimaryIdAttribute;
+        context.parameters.sampleDataSet.linking.addLinkedEntity({
+          name: this._props.businessProcessName!,
+          from: this._bpfLinkingAttributeName,
+          to: r.PrimaryIdAttribute,
+          linkType: "inner",
+          alias: "bpfentity"
+        });
+        if (context.parameters.sampleDataSet.addColumn) {
+          context.parameters.sampleDataSet.addColumn(
+            "activestageid",
+            "bpfentity"
+          );
+          context.parameters.sampleDataSet.addColumn(
+            "activestagestartedon",
+            "bpfentity"
+          );
+          context.parameters.sampleDataSet.addColumn("createdby", "bpfentity");
+          context.parameters.sampleDataSet.addColumn(
+            this._bpfLinkingAttributeName,
+            "bpfentity"
+          );
+        }
+      })
+      .then(() => context.parameters.sampleDataSet.refresh());
+
+    context.webAPI
+      .retrieveMultipleRecords(
+        "workflow",
+        `?$select=clientdata&$filter=category eq 4 and type eq 1 and  uniquename eq '${this._props.businessProcessName}'`
+      )
+      .then(w => {
+        if (w.entities.length == 0) return;
+        this._props.businessProcessStages = <IBusinessProcessStage[]>JSONPath.query(
+          JSON.parse(w.entities[0]["clientdata"]),
+          "$.steps.list[*].steps.list[*].stepLabels.list[*]"
+        );
+      });
   }
 
   /**
@@ -40,57 +101,35 @@ export class BusinessProcessFlowCards
   public updateView(context: ComponentFramework.Context<IInputs>): void {
     if (context.parameters.sampleDataSet.loading) return;
     this._context = context;
-
-    this._props.businessProcessName =
-      context.parameters.businessProcessName.raw;
-
-    context.webAPI
-      .retrieveMultipleRecords(
-        "workflow",
-        `?$select=clientdata&$filter=category eq 4 and type eq 1 and  uniquename eq '${this._props.businessProcessName}'`
-      )
-      .then(w => {
-        console.log(w);
-        if (w.entities.length == 0) return;
-        this._props.businessProcessStages = JSONPath.query(
-          JSON.parse(w.entities[0]["clientdata"]),
-          "$.steps.list[*].steps.list[*].stepLabels.list[*].description"
-        );
-        console.log(this._props.businessProcessStages);
-        ReactDOM.render(
-          React.createElement(BusinessProcess, this._props),
-          this._container
-        );
+    this._props.records = context.parameters.sampleDataSet.sortedRecordIds.map(
+      r => (<IBPFRecord>{
+        activeStageName: context.parameters.sampleDataSet.records[
+          r
+        ].getFormattedValue("bpfentity.activestageid"),
+        activeStageId: (<ComponentFramework.EntityReference>(
+          context.parameters.sampleDataSet.records[r].getValue(
+            "bpfentity.activestageid"
+          )
+        )).id.guid,
+        activeStageStartedOn: new Date(
+          context.parameters.sampleDataSet.records[r]
+            .getValue("bpfentity.activestagestartedon")
+            .toString()
+        ),
+        createdBy: context.parameters.sampleDataSet.records[
+          r
+        ].getFormattedValue("bpfentity.createdby"),
+        recordName: context.parameters.sampleDataSet.records[
+          r
+        ].getFormattedValue(`bpfentity.${this._bpfLinkingAttributeName}`),
+        recordId: r
       })
-      .then(w => {
-        fetch(
-          `/api/data/v9.1/EntityDefinitions(LogicalName='${context.parameters.sampleDataSet.getTargetEntityType()}')`,
-          { credentials: "include", method: "GET", mode: "cors" }
-        )
-          .then(r => r.json())
-          .then(r => r.PrimaryIdAttribute)
-          .then(r => {
-		// 	context.parameters.sampleDataSet.sortedRecordIds.forEach(r=>{
-		// 		context.webAPI
-		// 		.retrieveMultipleRecords(this._props.businessProcessName, 
-		// 	})
-		// 	<fetch>
-		// 	<entity name="new_testentitytestflow" >
-		// 	  <attribute name="activestageid" />
-		// 	  <attribute name="bpf_duration" />
-		// 	  <attribute name="createdon" />
-		// 	  <attribute name="activestagestartedon" />
-		// 	  <filter>
-		// 		<condition attribute="bpf_ryr_testentityid" operator="in" >
-		// 		  <value>c204773c-0969-e811-a95d-000d3ae0575b</value>
-		// 		  <value>67523658-1433-e911-a854-000d3ae0a6cf</value>
-		// 		  <value>90640953-9d3b-e911-a84b-000d3ae0b82e</value>
-		// 		</condition>
-		// 	  </filter>
-		// 	</entity>
-		//   </fetch>			
-		  });
-      });
+    );
+    console.log(this._props.records);
+    ReactDOM.render(
+      React.createElement(BusinessProcess, this._props),
+      this._container
+    );
   }
 
   /**
