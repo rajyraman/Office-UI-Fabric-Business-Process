@@ -18,7 +18,8 @@ export class BusinessProcessFlowCards
   private _props: IBusinessProcessProps = {
     businessProcessName: "",
     businessProcessStages: [],
-    records: []
+    records: [],
+    totalResultCount: 0
   };
   private _bpfLinkingAttributeName: string;
 
@@ -27,6 +28,21 @@ export class BusinessProcessFlowCards
       entityName: this._context.parameters.sampleDataSet.getTargetEntityType(),
       entityId: id
     });
+  }
+
+  private navigateToPage(pageCommand: string): void {
+    switch (pageCommand) {
+      case "next":
+        if (this._context.parameters.sampleDataSet.paging.hasNextPage) {
+          this._context.parameters.sampleDataSet.paging.loadNextPage();
+        }
+        break;
+      case "previous":
+        if (this._context.parameters.sampleDataSet.paging.hasPreviousPage) {
+          this._context.parameters.sampleDataSet.paging.loadPreviousPage();
+        }
+        break;
+    }
   }
 
   /**
@@ -48,6 +64,7 @@ export class BusinessProcessFlowCards
     this._props.businessProcessName =
       context.parameters.businessProcessName.raw;
     this._props.triggerNavigate = this.navigateToRecord.bind(this);
+    this._props.triggerPaging = this.navigateToPage.bind(this);
 
     context.utils
       .getEntityMetadata(context.parameters.sampleDataSet.getTargetEntityType())
@@ -87,9 +104,11 @@ export class BusinessProcessFlowCards
       )
       .then(w => {
         if (w.entities.length == 0) return;
-        this._props.businessProcessStages = <IBusinessProcessStage[]>JSONPath.query(
-          JSON.parse(w.entities[0]["clientdata"]),
-          "$.steps.list[*].steps.list[*].stepLabels.list[*]"
+        this._props.businessProcessStages = <IBusinessProcessStage[]>(
+          JSONPath.query(
+            JSON.parse(w.entities[0]["clientdata"]),
+            "$.steps.list[*].steps.list[*].stepLabels.list[*]"
+          )
         );
       });
   }
@@ -101,29 +120,33 @@ export class BusinessProcessFlowCards
   public updateView(context: ComponentFramework.Context<IInputs>): void {
     if (context.parameters.sampleDataSet.loading) return;
     this._context = context;
+    this._props.totalResultCount =
+      context.parameters.sampleDataSet.paging.totalResultCount;
+
     this._props.records = context.parameters.sampleDataSet.sortedRecordIds.map(
-      r => (<IBPFRecord>{
-        activeStageName: context.parameters.sampleDataSet.records[
-          r
-        ].getFormattedValue("bpfentity.activestageid"),
-        activeStageId: (<ComponentFramework.EntityReference>(
-          context.parameters.sampleDataSet.records[r].getValue(
-            "bpfentity.activestageid"
-          )
-        )).id.guid,
-        activeStageStartedOn: new Date(
-          context.parameters.sampleDataSet.records[r]
-            .getValue("bpfentity.activestagestartedon")
-            .toString()
-        ),
-        createdBy: context.parameters.sampleDataSet.records[
-          r
-        ].getFormattedValue("bpfentity.createdby"),
-        recordName: context.parameters.sampleDataSet.records[
-          r
-        ].getFormattedValue(`bpfentity.${this._bpfLinkingAttributeName}`),
-        recordId: r
-      })
+      r =>
+        <IBPFRecord>{
+          activeStageName: context.parameters.sampleDataSet.records[
+            r
+          ].getFormattedValue("bpfentity.activestageid"),
+          activeStageId: (<ComponentFramework.EntityReference>(
+            context.parameters.sampleDataSet.records[r].getValue(
+              "bpfentity.activestageid"
+            )
+          )).id.guid,
+          activeStageStartedOn: new Date(
+            context.parameters.sampleDataSet.records[r]
+              .getValue("bpfentity.activestagestartedon")
+              .toString()
+          ),
+          createdBy: context.parameters.sampleDataSet.records[
+            r
+          ].getFormattedValue("bpfentity.createdby"),
+          recordName: context.parameters.sampleDataSet.records[
+            r
+          ].getFormattedValue(`bpfentity.${this._bpfLinkingAttributeName}`),
+          recordId: r
+        }
     );
     console.log(this._props.records);
     ReactDOM.render(
