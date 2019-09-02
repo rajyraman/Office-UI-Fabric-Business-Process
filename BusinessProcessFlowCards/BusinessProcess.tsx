@@ -64,7 +64,7 @@ export function BusinessProcess(props: IBusinessProcessProps) {
     businessProcessStage: {
       padding: 10,
       fontWeight: FontWeights.semibold,
-      background: "#0078D4",
+      background: "rgb(59, 121, 183)",
       color: "#fcfcfc",
       boxShadow: "0 0 20px rgba(0, 0, 0, .2)",
       display: "block",
@@ -76,7 +76,7 @@ export function BusinessProcess(props: IBusinessProcessProps) {
     },
     sticky: {},
     footerStyle: {
-      borderLeft: "5px solid rgb(0, 120, 212)"
+      borderLeft: "5px solid rgb(59, 121, 183)"
     },
     stackStyles: {
       paddingTop: 5,
