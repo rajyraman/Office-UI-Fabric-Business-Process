@@ -20,6 +20,7 @@ import {
 
 // @ts-ignore
 import TimeAgo from "timeago-react";
+import { relative } from "path";
 
 initializeIcons(undefined, { disableWarnings: true });
 
@@ -80,23 +81,20 @@ export function BusinessProcess(props: IBusinessProcessProps) {
     stackStyles: {
       paddingTop: 5,
       paddingBottom: 5,
-      alignItems: "center",
       height: "60vh"
     },
     cardStyle: {
-      marginBottom: 5,
+      marginTop: 20,
+      marginLeft: 10
     },
     containerStackStyle: {
-      overflow: "scroll"
+      overflowX: "scroll",
+      overflowY: "hidden"
     },
-    bpfStageStyle: {
-      overflow: "scroll",
-      height: "60vh"
-    },
-    scrollableContainer: {
-      height: "60vh",
-      maxHeight: "inherit",
-      overflow: "scroll"
+    scrollablePaneContainer: {
+      position: "relative",
+      height: "80vh",
+      minWidth: 350
     }
   });
 
@@ -108,10 +106,9 @@ export function BusinessProcess(props: IBusinessProcessProps) {
 
   const cardTokens: ICardTokens = {
     childrenMargin: 12,
-    minWidth: 300,
-    maxHeight: 150,
-    padding: 20,
-    boxShadow: "0 0 20px rgba(0, 0, 0, .2)"
+    padding: 10,
+    boxShadow: "0 0 20px rgba(0, 0, 0, .2)",
+    minWidth: 310
   };
 
   const footerStackTokens: IStackTokens = {
@@ -157,48 +154,54 @@ export function BusinessProcess(props: IBusinessProcessProps) {
             key={stage.labelId}
             className={styles.stackStyles}
           >
-            <div>
-              <Text
-                variant="mediumPlus"
-                className={styles.businessProcessStage}
-              >
-                {stage.description}
-              </Text>
-            </div>
-            {props.records
-              .filter(r => r.activeStageId == stage.labelId)
-              .map(r => (
-                <Card
-                  tokens={cardTokens}
-                  id={r.recordId}
-                  key={r.recordId}
-                  onClick={cardClicked}
-                  className={styles.cardStyle}
-                >
-                  <Card.Section fill={false}>
-                    <Persona
-                      text={r.createdBy}
-                      size={PersonaSize.extraSmall}
-                      className={styles.persona}
-                    />
-                    <Stack
-                      horizontal
-                      tokens={footerStackTokens}
-                      className={styles.footerStyle}
+            <div className={styles.scrollablePaneContainer}>
+              <ScrollablePane scrollbarVisibility={"auto"}>
+                <Sticky>
+                  <div>
+                    <Text
+                      variant="mediumPlus"
+                      className={styles.businessProcessStage}
                     >
-                      <Text variant="medium" className={styles.headerText}>
-                        {r.recordName}
-                      </Text>
-                      <Text
-                        variant="smallPlus"
-                        className={styles.descriptionText}
-                      >
-                        <TimeAgo datetime={r.activeStageStartedOn} />
-                      </Text>
-                    </Stack>
-                  </Card.Section>
-                </Card>
-              ))}
+                      {stage.description}
+                    </Text>
+                  </div>
+                </Sticky>
+                {props.records
+                  .filter(r => r.activeStageId == stage.labelId)
+                  .map(r => (
+                    <Card
+                      tokens={cardTokens}
+                      id={r.recordId}
+                      key={r.recordId}
+                      onClick={cardClicked}
+                      className={styles.cardStyle}
+                    >
+                      <Card.Section fill={false} grow>
+                        <Persona
+                          text={r.createdBy}
+                          size={PersonaSize.extraSmall}
+                          className={styles.persona}
+                        />
+                        <Stack
+                          horizontal
+                          tokens={footerStackTokens}
+                          className={styles.footerStyle}
+                        >
+                          <Text variant="medium" className={styles.headerText}>
+                            {r.recordName}
+                          </Text>
+                          <Text
+                            variant="smallPlus"
+                            className={styles.descriptionText}
+                          >
+                            <TimeAgo datetime={r.activeStageStartedOn} />
+                          </Text>
+                        </Stack>
+                      </Card.Section>
+                    </Card>
+                  ))}
+              </ScrollablePane>
+            </div>
           </Stack>
         ))}
       </Stack>
