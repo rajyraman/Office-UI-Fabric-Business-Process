@@ -10,17 +10,24 @@ import {
   IStackTokens,
   Text,
   Sticky,
-  StickyPositionType,
   CommandBar,
   ICommandBarItemProps,
-  ColorClassNames,
   ScrollablePane,
-  ScrollbarVisibility
+  IStyle,
+  ColorClassNames
 } from "office-ui-fabric-react";
 
 // @ts-ignore
 import TimeAgo from "timeago-react";
-import { relative } from "path";
+import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  DropResult,
+  ResponderProvided,
+  DraggingStyle,
+  NotDraggingStyle
+} from "react-beautiful-dnd";
 
 initializeIcons(undefined, { disableWarnings: true });
 
@@ -139,6 +146,7 @@ export function BusinessProcess(props: IBusinessProcessProps) {
   ];
   const leftCommands: ICommandBarItemProps[] = [];
 
+  const onDragEnd = (result: DropResult, provided: ResponderProvided) => {};
   return (
     <>
       <CommandBar farItems={rightCommands} items={leftCommands} />
@@ -166,40 +174,72 @@ export function BusinessProcess(props: IBusinessProcessProps) {
                     </Text>
                   </div>
                 </Sticky>
-                {props.records
-                  .filter(r => r.activeStageId == stage.labelId)
-                  .map(r => (
-                    <Card
-                      tokens={cardTokens}
-                      id={r.recordId}
-                      key={r.recordId}
-                      onClick={cardClicked}
-                      className={styles.cardStyle}
-                    >
-                      <Card.Section fill={false} grow>
-                        <Persona
-                          text={r.createdBy}
-                          size={PersonaSize.extraSmall}
-                          className={styles.persona}
-                        />
-                        <Stack
-                          horizontal
-                          tokens={footerStackTokens}
-                          className={styles.footerStyle}
-                        >
-                          <Text variant="medium" className={styles.headerText}>
-                            {r.recordName}
-                          </Text>
-                          <Text
-                            variant="smallPlus"
-                            className={styles.descriptionText}
-                          >
-                            <TimeAgo datetime={r.activeStageStartedOn} />
-                          </Text>
-                        </Stack>
-                      </Card.Section>
-                    </Card>
-                  ))}
+                {
+                  <DragDropContext onDragEnd={onDragEnd}>
+                    <Droppable droppableId={stage.description}>
+                      {(provided, snapshot) => (
+                        <div ref={provided.innerRef}>
+                          {props.records
+                            .filter(r => r.activeStageId == stage.labelId)
+                            .map((item, index) => (
+                              <Draggable
+                                key={item.recordId}
+                                draggableId={item.recordId}
+                                index={index}
+                              >
+                                {(provided, snapshot) => (
+                                  <div
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    {...provided.dragHandleProps}
+                                  >
+                                    <Card
+                                      tokens={cardTokens}
+                                      id={item.recordId}
+                                      key={item.recordId}
+                                      onClick={cardClicked}
+                                      className={styles.cardStyle}
+                                    >
+                                      <Card.Section fill={false} grow>
+                                        <Persona
+                                          text={item.createdBy}
+                                          size={PersonaSize.extraSmall}
+                                          className={styles.persona}
+                                        />
+                                        <Stack
+                                          horizontal
+                                          tokens={footerStackTokens}
+                                          className={styles.footerStyle}
+                                        >
+                                          <Text
+                                            variant="medium"
+                                            className={styles.headerText}
+                                          >
+                                            {item.recordName}
+                                          </Text>
+                                          <Text
+                                            variant="smallPlus"
+                                            className={styles.descriptionText}
+                                          >
+                                            <TimeAgo
+                                              datetime={
+                                                item.activeStageStartedOn
+                                              }
+                                            />
+                                          </Text>
+                                        </Stack>
+                                      </Card.Section>
+                                    </Card>
+                                  </div>
+                                )}
+                              </Draggable>
+                            ))}
+                          {provided.placeholder}
+                        </div>
+                      )}
+                    </Droppable>
+                  </DragDropContext>
+                }
               </ScrollablePane>
             </div>
           </Stack>

@@ -16,6 +16,7 @@
     "jsonpath": "^1.0.2",
     "office-ui-fabric-react": "^7.25.0",
     "react": "^16.9.0",
+    "react-beautiful-dnd": "^11.0.5",
     "react-dom": "^16.9.0",
     "timeago-react": "^2.0.1"
   },
