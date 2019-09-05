@@ -2,11 +2,11 @@ import { IInputs, IOutputs } from "./generated/ManifestTypes";
 import DataSetInterfaces = ComponentFramework.PropertyHelper.DataSetApi;
 type DataSet = ComponentFramework.PropertyTypes.DataSet;
 import {
-  BusinessProcess,
-  IBusinessProcessProps,
+  BusinessProcessBoard,
+  IBusinessProcessBoardProps,
   IBusinessProcessStage,
   IBPFRecord
-} from "./BusinessProcess";
+} from "./BusinessProcessBoard";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as JSONPath from "jsonpath";
@@ -15,13 +15,34 @@ export class BusinessProcessFlowCards
   implements ComponentFramework.StandardControl<IInputs, IOutputs> {
   private _container: HTMLDivElement;
   private _context: ComponentFramework.Context<IInputs>;
-  private _props: IBusinessProcessProps = {
+  private _props: IBusinessProcessBoardProps = {
     businessProcessName: "",
     businessProcessStages: [],
     records: [],
     totalResultCount: 0
   };
   private _bpfLinkingAttributeName: string;
+
+  private moveToNextStage(
+    recordId: string,
+    activeStage: string,
+    traversedPath: string
+  ) {
+    let entity: any = {};
+    entity["activestageid@odata.bind"] = `/processstages(${activeStage})`;
+    entity.traversedpath = traversedPath;
+
+    this._context.webAPI
+      .updateRecord(this._props.businessProcessName!, recordId, entity)
+      .then(
+        function success(result) {
+          var updatedEntityId = result.id;
+        },
+        error => {
+          this._context.factory.getPopupService().createPopup(error.message);
+        }
+      );
+  }
 
   private navigateToRecord(id: string): void {
     this._context.navigation.openForm({
@@ -90,6 +111,10 @@ export class BusinessProcessFlowCards
           );
           context.parameters.sampleDataSet.addColumn("createdby", "bpfentity");
           context.parameters.sampleDataSet.addColumn(
+            "traversedpath",
+            "bpfentity"
+          );
+          context.parameters.sampleDataSet.addColumn(
             this._bpfLinkingAttributeName,
             "bpfentity"
           );
@@ -107,7 +132,7 @@ export class BusinessProcessFlowCards
         this._props.businessProcessStages = <IBusinessProcessStage[]>(
           JSONPath.query(
             JSON.parse(w.entities[0]["clientdata"]),
-            "$.steps.list[*].steps.list[*].stepLabels.list[*]"
+            "$.steps.list[*].steps.list[*]"
           )
         );
       });
@@ -145,12 +170,15 @@ export class BusinessProcessFlowCards
           recordName: context.parameters.sampleDataSet.records[
             r
           ].getFormattedValue(`bpfentity.${this._bpfLinkingAttributeName}`),
+          traversedPath: context.parameters.sampleDataSet.records[
+            r
+          ].getFormattedValue("bpfentity.traversedPath"),
           recordId: r
         }
     );
     console.log(this._props.records);
     ReactDOM.render(
-      React.createElement(BusinessProcess, this._props),
+      React.createElement(BusinessProcessBoard, this._props),
       this._container
     );
   }
