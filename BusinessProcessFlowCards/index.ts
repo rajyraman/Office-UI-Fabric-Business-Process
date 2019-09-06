@@ -1,12 +1,12 @@
 import { IInputs, IOutputs } from "./generated/ManifestTypes";
 import DataSetInterfaces = ComponentFramework.PropertyHelper.DataSetApi;
 type DataSet = ComponentFramework.PropertyTypes.DataSet;
+import { BPFCardsApp } from "./BPFCardsApp";
 import {
-  BusinessProcessBoard,
   IBusinessProcessBoardProps,
   IBusinessProcessStage,
   IBPFRecord
-} from "./BusinessProcessBoard";
+} from "./Interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as JSONPath from "jsonpath";
@@ -178,7 +178,7 @@ export class BusinessProcessFlowCards
     );
     console.log(this._props.records);
     ReactDOM.render(
-      React.createElement(BusinessProcessBoard, this._props),
+      React.createElement(BPFCardsApp, this._props),
       this._container
     );
   }

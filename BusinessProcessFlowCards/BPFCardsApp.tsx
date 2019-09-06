@@ -1,8 +1,9 @@
 import * as React from "react";
+import { useState, useEffect, useContext } from "react";
 import {
   initializeIcons,
-  FontWeights,
   mergeStyleSets,
+  FontWeights,
   Stack,
   IStackTokens,
   Text,
@@ -12,40 +13,24 @@ import {
   ScrollablePane
 } from "office-ui-fabric-react";
 import { BusinessProcessRecordCard, Action } from "./BusinessProcessRecordCard";
+import {
+  IBusinessProcessBoardProps,
+  IBPFRecord,
+  IBusinessProcessStage
+} from "./Interfaces";
 
 initializeIcons(undefined, { disableWarnings: true });
+const BPFStageContext = React.createContext<IBusinessProcessStage>({
+  stageId: "",
+  nextStageId: "",
+  description: "",
+  stepLabels: { list: [] }
+});
 
-export interface IBusinessProcessBoardProps {
-  businessProcessName: string | null;
-  businessProcessStages: IBusinessProcessStage[];
-  records: IBPFRecord[];
-  totalResultCount: number;
-  triggerNavigate?: (id: string) => void;
-  triggerPaging?: (pageCommand: string) => void;
-}
-export interface IBusinessProcessStage {
-  stageId: string;
-  nextStageId: string;
-  description: string;
-  stepLabels: IBusinessProcessStageList;
-}
-
-export interface IBusinessProcessStageList {
-  list: string[];
-}
-
-export interface IBPFRecord {
-  activeStageId: string;
-  nextStageId: string;
-  activeStageName: string;
-  activeStageStartedOn: Date;
-  recordName: string;
-  createdBy: string;
-  recordId: string;
-  traversedPath: string;
-}
-export function BusinessProcessBoard(props: IBusinessProcessBoardProps): JSX.Element {
-  const [bpfRecords, setBpfRecords] = React.useState<IBPFRecord[]>(props.records);
+const BPFCardsApp: React.SFC<IBusinessProcessBoardProps> = (
+  props
+): JSX.Element => {
+  const [bpfRecords, setBpfRecords] = useState<IBPFRecord[]>(props.records);
 
   const styles = mergeStyleSets({
     businessProcessStage: {
@@ -58,12 +43,12 @@ export function BusinessProcessBoard(props: IBusinessProcessBoardProps): JSX.Ele
       textAlign: "center",
       minWidth: 300
     },
-    stackStyles: {
+    bpfStack: {
       paddingTop: 5,
       paddingBottom: 5,
       height: "60vh"
     },
-    containerStackStyle: {
+    containerStack: {
       overflowX: "scroll",
       overflowY: "hidden"
     },
@@ -96,15 +81,21 @@ export function BusinessProcessBoard(props: IBusinessProcessBoardProps): JSX.Ele
     }
   ];
   const leftCommands: ICommandBarItemProps[] = [];
-  
+
   const moveCard = (card: IBPFRecord, action: Action): void => {
     console.log(`${action} ${card.recordId}`);
-    let updatedRecord = bpfRecords.filter(b=>b.recordId === card.recordId).map(b=>{
-      b.activeStageId = card.nextStageId;
+    console.table(bpfRecords);
+    let updatedRecords = bpfRecords.map(b => {
+      if (b.recordId === card.recordId && card.nextStageId) {
+        console.log(
+          `Move ${b.recordId} from ${b.activeStageId} to ${card.nextStageId}`
+        );
+        b.activeStageId = card.nextStageId;
+      }
       return b;
-    }); 
-    console.log(updatedRecord);
-    //setBpfRecords(updatedRecords);
+    });
+    console.table(updatedRecords);
+    setBpfRecords(updatedRecords);
   };
 
   return (
@@ -113,7 +104,7 @@ export function BusinessProcessBoard(props: IBusinessProcessBoardProps): JSX.Ele
       <Stack
         horizontal
         tokens={containerStackTokens}
-        className={styles.containerStackStyle}
+        className={styles.containerStack}
       >
         {props.businessProcessStages
           .filter(b => b.stepLabels.list.length > 0)
@@ -122,32 +113,35 @@ export function BusinessProcessBoard(props: IBusinessProcessBoardProps): JSX.Ele
               tokens={sectionStackTokens}
               id={stage.stageId}
               key={stage.stageId}
-              className={styles.stackStyles}
+              className={styles.bpfStack}
             >
               <div className={styles.scrollablePaneContainer}>
                 <ScrollablePane scrollbarVisibility={"auto"}>
-                  <Sticky>
-                    <div>
-                      <Text
-                        variant="mediumPlus"
-                        className={styles.businessProcessStage}
-                      >
-                        {stage.description}
-                      </Text>
-                    </div>
-                  </Sticky>
-                  <div>
+                  <BPFStageContext.Provider value={stage}>
+                    <Sticky>
+                      <div>
+                        <Text
+                          variant="mediumPlus"
+                          className={styles.businessProcessStage}
+                        >
+                          {stage.description}
+                        </Text>
+                      </div>
+                    </Sticky>
                     {bpfRecords
                       .filter(r => r.activeStageId == stage.stageId)
-                      .map((card: IBPFRecord, index) => (
-                        <BusinessProcessRecordCard
-                          bpfDetail={card}
-                          key={card.recordId}
-                          triggerNavigate={props.triggerNavigate}
-                          onClick={moveCard}
-                        />
-                      ))}
-                  </div>
+                      .map((card: IBPFRecord, index) => {
+                        card.nextStageId = stage.nextStageId;
+                        return (
+                          <BusinessProcessRecordCard
+                            bpfDetail={card}
+                            key={card.recordId}
+                            triggerNavigate={props.triggerNavigate}
+                            onClick={moveCard}
+                          />
+                        );
+                      })}
+                  </BPFStageContext.Provider>
                 </ScrollablePane>
               </div>
             </Stack>
@@ -155,4 +149,6 @@ export function BusinessProcessBoard(props: IBusinessProcessBoardProps): JSX.Ele
       </Stack>
     </>
   );
-}
+};
+
+export { BPFStageContext, BPFCardsApp };

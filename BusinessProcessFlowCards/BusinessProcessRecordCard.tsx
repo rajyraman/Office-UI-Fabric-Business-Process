@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useContext } from "react";
 import { Card, ICardTokens } from "@uifabric/react-cards";
 import {
   FontWeights,
@@ -16,7 +17,8 @@ import {
 
 // @ts-ignore
 import TimeAgo from "timeago-react";
-import { IBPFRecord } from "./BusinessProcessBoard";
+import { IBPFRecord } from "./Interfaces";
+import { BPFStageContext } from "./BPFCardsApp";
 
 const styles = mergeStyleSets({
   headerText: {
@@ -25,25 +27,26 @@ const styles = mergeStyleSets({
   descriptionText: {
     color: "#333333"
   },
-  iconStyle: {
+  icon: {
     color: "#0078D4",
     fontSize: 16,
     fontWeight: FontWeights.semibold,
-    paddingTop: 10
+    paddingTop: 5
   },
   persona: {
     padding: 5
   },
-  footerStyle: {
+  footer: {
     borderLeft: "5px solid rgb(59, 121, 183)"
   },
-  cardStyle: {
-    marginTop: 20,
+  card: {
+    marginTop: 10,
+    marginBottom: 10,
     marginLeft: 5
   },
-  navigationIconStyle: {
+  navigationSection: {
     borderLeft: "2px solid #F3F2F1",
-    paddingLeft: 10
+    paddingLeft: 5
   }
 });
 
@@ -74,8 +77,16 @@ export interface IBusinessProcessRecordCardProps {
 export function BusinessProcessRecordCard(
   props: IBusinessProcessRecordCardProps
 ): JSX.Element {
+  const bpfStage = useContext(BPFStageContext);
   const cardClicked = (
-    ev: React.MouseEvent<HTMLElement | HTMLAnchorElement | HTMLButtonElement | HTMLDivElement | BaseButton | Button>,
+    ev: React.MouseEvent<
+      | HTMLElement
+      | HTMLAnchorElement
+      | HTMLButtonElement
+      | HTMLDivElement
+      | BaseButton
+      | Button
+    >,
     action: Action,
     recordId: string
   ): void => {
@@ -87,7 +98,7 @@ export function BusinessProcessRecordCard(
         }
         break;
       default:
-        if(props.onClick){
+        if (props.onClick) {
           props.onClick(props.bpfDetail, action);
         }
         break;
@@ -100,7 +111,7 @@ export function BusinessProcessRecordCard(
       tokens={cardTokens}
       id={props.bpfDetail.recordId}
       key={props.bpfDetail.recordId}
-      className={styles.cardStyle}
+      className={styles.card}
     >
       <Card.Section fill={false} grow>
         <Persona
@@ -108,11 +119,7 @@ export function BusinessProcessRecordCard(
           size={PersonaSize.extraSmall}
           className={styles.persona}
         />
-        <Stack
-          horizontal
-          tokens={footerStackTokens}
-          className={styles.footerStyle}
-        >
+        <Stack horizontal tokens={footerStackTokens} className={styles.footer}>
           <Text variant="medium" className={styles.headerText}>
             {props.bpfDetail.recordName}
           </Text>
@@ -121,21 +128,23 @@ export function BusinessProcessRecordCard(
           </Text>
         </Stack>
       </Card.Section>
-      <Card.Section className={styles.navigationIconStyle}>
+      <Card.Section className={styles.navigationSection}>
         <IconButton
-          iconProps={{iconName: "ChevronLeft"}}
-          className={styles.iconStyle}
+          iconProps={{ iconName: "ChevronLeft" }}
+          className={styles.icon}
           onClick={e => cardClicked(e, Action.Left, props.bpfDetail.recordId)}
         />
         <IconButton
-          iconProps={{iconName: "ChevronRight"}}
-          className={styles.iconStyle}
+          iconProps={{ iconName: "ChevronRight" }}
+          className={styles.icon}
           onClick={e => cardClicked(e, Action.Right, props.bpfDetail.recordId)}
         />
         <IconButton
-          iconProps={{iconName: "RedEye"}}
-          className={styles.iconStyle}
-          onClick={e => cardClicked(e, Action.Navigate, props.bpfDetail.recordId)}
+          iconProps={{ iconName: "RedEye" }}
+          className={styles.icon}
+          onClick={e =>
+            cardClicked(e, Action.Navigate, props.bpfDetail.recordId)
+          }
         />
       </Card.Section>
     </Card>
