@@ -3,6 +3,7 @@ export interface IBusinessProcessBoardProps {
   businessProcessStages: IBusinessProcessStage[];
   records: IBPFRecord[];
   totalResultCount: number;
+  triggerStageChange?: (record: IBPFRecord) => Promise<boolean|void>;
   triggerNavigate?: (id: string) => void;
   triggerPaging?: (pageCommand: string) => void;
 }
@@ -21,5 +22,7 @@ export interface IBPFRecord {
   recordName: string;
   createdBy: string;
   recordId: string;
+  bpfInstanceId: string;
   traversedPath: string;
+  isLocal: boolean
 }

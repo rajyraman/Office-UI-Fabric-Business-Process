@@ -15,6 +15,7 @@ export class BusinessProcessFlowCards
   implements ComponentFramework.StandardControl<IInputs, IOutputs> {
   private _container: HTMLDivElement;
   private _context: ComponentFramework.Context<IInputs>;
+  private _notifyOutputChanged: () => void;
   private _props: IBusinessProcessBoardProps = {
     businessProcessName: "",
     businessProcessStages: [],
@@ -22,26 +23,33 @@ export class BusinessProcessFlowCards
     totalResultCount: 0
   };
   private _bpfLinkingAttributeName: string;
+  private _runCount: number;
 
-  private moveToNextStage(
-    recordId: string,
-    activeStage: string,
-    traversedPath: string
-  ) {
+  private async changeStage(record: IBPFRecord): Promise<boolean | void> {
     let entity: any = {};
-    entity["activestageid@odata.bind"] = `/processstages(${activeStage})`;
-    entity.traversedpath = traversedPath;
-
-    this._context.webAPI
-      .updateRecord(this._props.businessProcessName!, recordId, entity)
+    entity[
+      "activestageid@odata.bind"
+    ] = `/processstages(${record.activeStageId})`;
+    entity.traversedpath = record.traversedPath;
+    return this._context.webAPI
+      .updateRecord(
+        this._props.businessProcessName!,
+        record.bpfInstanceId,
+        entity
+      )
       .then(
-        function success(result) {
-          var updatedEntityId = result.id;
+        result => {
+          return true;
         },
         error => {
-          this._context.factory.getPopupService().createPopup(error.message);
+          this._context.navigation.openErrorDialog({ message: error.message });
+          return false;
         }
-      );
+      )
+      .finally(() => {
+        this._runCount = 0;
+        this.loadBPFData();
+      });
   }
 
   private navigateToRecord(id: string): void {
@@ -66,6 +74,55 @@ export class BusinessProcessFlowCards
     }
   }
 
+  private loadBPFData() {
+    this._context.utils
+      .getEntityMetadata(
+        this._context.parameters.sampleDataSet.getTargetEntityType()
+      )
+      .then(r => {
+        this._bpfLinkingAttributeName = r.IsCustomEntity
+          ? `bpf_${r.PrimaryIdAttribute}`
+          : r.PrimaryIdAttribute;
+        this._context.parameters.sampleDataSet.linking.addLinkedEntity({
+          name: this._props.businessProcessName!,
+          from: this._bpfLinkingAttributeName,
+          to: r.PrimaryIdAttribute,
+          linkType: "inner",
+          alias: "bpfentity"
+        });
+        if (this._context.parameters.sampleDataSet.addColumn) {
+          this._context.parameters.sampleDataSet.addColumn(
+            "activestageid",
+            "bpfentity"
+          );
+          this._context.parameters.sampleDataSet.addColumn(
+            "activestagestartedon",
+            "bpfentity"
+          );
+          this._context.parameters.sampleDataSet.addColumn(
+            "createdby",
+            "bpfentity"
+          );
+          this._context.parameters.sampleDataSet.addColumn(
+            "traversedpath",
+            "bpfentity"
+          );
+          this._context.parameters.sampleDataSet.addColumn(
+            this._bpfLinkingAttributeName,
+            "bpfentity"
+          );
+          this._context.parameters.sampleDataSet.addColumn(
+            "businessprocessflowinstanceid",
+            "bpfentity"
+          );
+        }
+      })
+      .then(() => {
+        this._runCount++;
+        this._context.parameters.sampleDataSet.refresh();
+      });
+  }
+
   /**
    * Used to initialize the control instance. Controls can kick off remote server calls and other initialization actions here.
    * Data-set values are not initialized here, use updateView.
@@ -82,45 +139,15 @@ export class BusinessProcessFlowCards
   ) {
     this._container = container;
     this._context = context;
+    this._notifyOutputChanged = notifyOutputChanged;
+    this._runCount = 0;
     this._props.businessProcessName =
       context.parameters.businessProcessName.raw;
     this._props.triggerNavigate = this.navigateToRecord.bind(this);
     this._props.triggerPaging = this.navigateToPage.bind(this);
+    this._props.triggerStageChange = this.changeStage.bind(this);
 
-    context.utils
-      .getEntityMetadata(context.parameters.sampleDataSet.getTargetEntityType())
-      .then(r => {
-        this._bpfLinkingAttributeName = r.IsCustomEntity
-          ? `bpf_${r.PrimaryIdAttribute}`
-          : r.PrimaryIdAttribute;
-        context.parameters.sampleDataSet.linking.addLinkedEntity({
-          name: this._props.businessProcessName!,
-          from: this._bpfLinkingAttributeName,
-          to: r.PrimaryIdAttribute,
-          linkType: "inner",
-          alias: "bpfentity"
-        });
-        if (context.parameters.sampleDataSet.addColumn) {
-          context.parameters.sampleDataSet.addColumn(
-            "activestageid",
-            "bpfentity"
-          );
-          context.parameters.sampleDataSet.addColumn(
-            "activestagestartedon",
-            "bpfentity"
-          );
-          context.parameters.sampleDataSet.addColumn("createdby", "bpfentity");
-          context.parameters.sampleDataSet.addColumn(
-            "traversedpath",
-            "bpfentity"
-          );
-          context.parameters.sampleDataSet.addColumn(
-            this._bpfLinkingAttributeName,
-            "bpfentity"
-          );
-        }
-      })
-      .then(() => context.parameters.sampleDataSet.refresh());
+    this.loadBPFData();
 
     context.webAPI
       .retrieveMultipleRecords(
@@ -143,11 +170,13 @@ export class BusinessProcessFlowCards
    * @param context The entire property bag available to control via Context Object; It contains values as set up by the customizer mapped to names defined in the manifest, as well as utility functions
    */
   public updateView(context: ComponentFramework.Context<IInputs>): void {
-    if (context.parameters.sampleDataSet.loading) return;
+    if (context.parameters.sampleDataSet.loading || this._runCount > 2) return;
+    console.groupCollapsed("updateView");
+
     this._context = context;
     this._props.totalResultCount =
       context.parameters.sampleDataSet.paging.totalResultCount;
-
+    this.loadBPFData();
     this._props.records = context.parameters.sampleDataSet.sortedRecordIds.map(
       r =>
         <IBPFRecord>{
@@ -172,15 +201,19 @@ export class BusinessProcessFlowCards
           ].getFormattedValue(`bpfentity.${this._bpfLinkingAttributeName}`),
           traversedPath: context.parameters.sampleDataSet.records[
             r
-          ].getFormattedValue("bpfentity.traversedPath"),
-          recordId: r
+          ].getFormattedValue("bpfentity.traversedpath"),
+          recordId: r,
+          bpfInstanceId: context.parameters.sampleDataSet.records[
+            r
+          ].getFormattedValue(`bpfentity.businessprocessflowinstanceid`)
         }
     );
-    console.log(this._props.records);
+    console.table(this._props.records);
     ReactDOM.render(
       React.createElement(BPFCardsApp, this._props),
       this._container
     );
+    console.groupEnd();
   }
 
   /**
@@ -188,7 +221,11 @@ export class BusinessProcessFlowCards
    * @returns an object based on nomenclature defined in manifest, expecting object[s] for property marked as “bound” or “output”
    */
   public getOutputs(): IOutputs {
-    return {};
+    console.groupCollapsed("getOutputs");
+    console.groupEnd();
+    return {
+      businessProcessName: this._props.businessProcessName
+    };
   }
 
   /**

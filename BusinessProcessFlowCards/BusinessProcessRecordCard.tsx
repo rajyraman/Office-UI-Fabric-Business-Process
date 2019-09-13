@@ -110,7 +110,7 @@ export function BusinessProcessRecordCard(
       compact
       tokens={cardTokens}
       id={props.bpfDetail.recordId}
-      key={props.bpfDetail.recordId}
+      key={props.bpfDetail.bpfInstanceId}
       className={styles.card}
     >
       <Card.Section fill={false} grow>

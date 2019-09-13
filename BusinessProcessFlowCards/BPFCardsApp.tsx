@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useRef } from "react";
 import {
   initializeIcons,
   mergeStyleSets,
@@ -31,6 +31,12 @@ const BPFCardsApp: React.SFC<IBusinessProcessBoardProps> = (
   props
 ): JSX.Element => {
   const [bpfRecords, setBpfRecords] = useState<IBPFRecord[]>(props.records);
+  const isInitialRender = useRef(true);
+  console.log(bpfRecords);
+  useEffect(() => {
+    console.log('useEffect');
+    setBpfRecords(props.records);
+  }, [props.records]);
 
   const styles = mergeStyleSets({
     businessProcessStage: {
@@ -83,19 +89,37 @@ const BPFCardsApp: React.SFC<IBusinessProcessBoardProps> = (
   const leftCommands: ICommandBarItemProps[] = [];
 
   const moveCard = (card: IBPFRecord, action: Action): void => {
-    console.log(`${action} ${card.recordId}`);
-    console.table(bpfRecords);
     let updatedRecords = bpfRecords.map(b => {
-      if (b.recordId === card.recordId && card.nextStageId) {
-        console.log(
-          `Move ${b.recordId} from ${b.activeStageId} to ${card.nextStageId}`
-        );
-        b.activeStageId = card.nextStageId;
+      if (b.recordId === card.recordId) {
+        switch (action) {
+          case Action.Left:
+            const stages = b.traversedPath.split(",");
+            if (stages.length > 1) {
+              const prevStageId: string = stages.pop()!;
+              console.log(
+                `Move back ${b.recordId} from ${b.activeStageId} to ${prevStageId}`
+              );
+              b.activeStageId = stages[stages.length - 1];
+              b.traversedPath = stages.join();
+            }
+            break;
+          case Action.Right:
+            if (card.nextStageId) {
+              console.log(
+                `Move forward ${b.recordId} from ${b.activeStageId} to ${card.nextStageId}`
+              );
+              b.activeStageId = card.nextStageId;
+              b.traversedPath = `${b.traversedPath},${card.nextStageId}`;
+            }
+            break;
+        }
+        b.isLocal = true;
+        if(props.triggerStageChange){
+          props.triggerStageChange(b);
+        }        
       }
       return b;
     });
-    console.table(updatedRecords);
-    setBpfRecords(updatedRecords);
   };
 
   return (
@@ -135,7 +159,7 @@ const BPFCardsApp: React.SFC<IBusinessProcessBoardProps> = (
                         return (
                           <BusinessProcessRecordCard
                             bpfDetail={card}
-                            key={card.recordId}
+                            key={card.bpfInstanceId}
                             triggerNavigate={props.triggerNavigate}
                             onClick={moveCard}
                           />
