@@ -1,6 +1,6 @@
 {
   "name": "pcf-project",
-  "version": "1.5.0",
+  "version": "1.5.4",
   "description": "Project containing your PowerApps Component Framework (PCF) control.",
   "scripts": {
     "build": "pcf-scripts build",
@@ -23,7 +23,7 @@
   "devDependencies": {
     "@types/jsonpath": "^0.2.0",
     "@types/react-beautiful-dnd": "^11.0.3",
-    "pcf-scripts": "^0.4.3",
-    "pcf-start": "^0"
+    "pcf-scripts": "^1.0.6",
+    "pcf-start": "^1.0.6"
   }
 }

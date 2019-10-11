@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <manifest>
-  <control namespace="RYR" constructor="BusinessProcessFlowCards" version="1.5.1" display-name-key="Business Process Flow Cards" description-key="Display running business processes as cards" control-type="standard">
+  <control namespace="RYR" constructor="BusinessProcessFlowCards" version="1.5.4" display-name-key="Business Process Flow Cards" description-key="Display running business processes as cards" control-type="standard">
     <!-- dataset node represents a set of entity records on CDS; allow more than one datasets -->
     <data-set name="sampleDataSet" display-name-key="View records to be displayed as cards">
     </data-set>

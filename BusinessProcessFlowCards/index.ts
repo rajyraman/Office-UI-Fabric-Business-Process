@@ -80,46 +80,50 @@ export class BusinessProcessFlowCards
         this._context.parameters.sampleDataSet.getTargetEntityType()
       )
       .then(r => {
-        this._bpfLinkingAttributeName = r.IsCustomEntity
-          ? `bpf_${r.PrimaryIdAttribute}`
-          : r.PrimaryIdAttribute;
-        this._context.parameters.sampleDataSet.linking.addLinkedEntity({
-          name: this._props.businessProcessName!,
-          from: this._bpfLinkingAttributeName,
-          to: r.PrimaryIdAttribute,
-          linkType: "inner",
-          alias: "bpfentity"
-        });
-        if (this._context.parameters.sampleDataSet.addColumn) {
-          this._context.parameters.sampleDataSet.addColumn(
-            "activestageid",
-            "bpfentity"
-          );
-          this._context.parameters.sampleDataSet.addColumn(
-            "activestagestartedon",
-            "bpfentity"
-          );
-          this._context.parameters.sampleDataSet.addColumn(
-            "createdby",
-            "bpfentity"
-          );
-          this._context.parameters.sampleDataSet.addColumn(
-            "traversedpath",
-            "bpfentity"
-          );
-          this._context.parameters.sampleDataSet.addColumn(
-            this._bpfLinkingAttributeName,
-            "bpfentity"
-          );
-          this._context.parameters.sampleDataSet.addColumn(
-            "businessprocessflowinstanceid",
-            "bpfentity"
-          );
-        }
-      })
-      .then(() => {
-        this._runCount++;
-        this._context.parameters.sampleDataSet.refresh();
+        this._context.utils
+          .getEntityMetadata(this._context.parameters.businessProcessName.raw!)
+          .then(b => {
+            this._bpfLinkingAttributeName = b.IsCustomEntity
+              ? `bpf_${r.PrimaryIdAttribute}`
+              : r.PrimaryIdAttribute;
+            this._context.parameters.sampleDataSet.linking.addLinkedEntity({
+              name: this._props.businessProcessName!,
+              from: this._bpfLinkingAttributeName,
+              to: r.PrimaryIdAttribute,
+              linkType: "inner",
+              alias: "bpfentity"
+            });
+            if (this._context.parameters.sampleDataSet.addColumn) {
+              this._context.parameters.sampleDataSet.addColumn(
+                "activestageid",
+                "bpfentity"
+              );
+              this._context.parameters.sampleDataSet.addColumn(
+                "activestagestartedon",
+                "bpfentity"
+              );
+              this._context.parameters.sampleDataSet.addColumn(
+                "createdby",
+                "bpfentity"
+              );
+              this._context.parameters.sampleDataSet.addColumn(
+                "traversedpath",
+                "bpfentity"
+              );
+              this._context.parameters.sampleDataSet.addColumn(
+                this._bpfLinkingAttributeName,
+                "bpfentity"
+              );
+              this._context.parameters.sampleDataSet.addColumn(
+                "businessprocessflowinstanceid",
+                "bpfentity"
+              );
+            }
+          })
+          .then(() => {
+            this._runCount++;
+            this._context.parameters.sampleDataSet.refresh();
+          });
       });
   }
 
