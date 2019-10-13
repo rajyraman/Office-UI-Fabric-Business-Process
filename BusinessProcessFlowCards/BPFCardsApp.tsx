@@ -10,7 +10,8 @@ import {
   Sticky,
   CommandBar,
   ICommandBarItemProps,
-  ScrollablePane
+  ScrollablePane,
+  AutoScroll
 } from "office-ui-fabric-react";
 import { BusinessProcessRecordCard, Action } from "./BusinessProcessRecordCard";
 import {
@@ -34,7 +35,7 @@ const BPFCardsApp: React.SFC<IBusinessProcessBoardProps> = (
   const isInitialRender = useRef(true);
   console.log(bpfRecords);
   useEffect(() => {
-    console.log('useEffect');
+    console.log("useEffect");
     setBpfRecords(props.records);
   }, [props.records]);
 
@@ -52,12 +53,12 @@ const BPFCardsApp: React.SFC<IBusinessProcessBoardProps> = (
     bpfStack: {
       paddingTop: 5,
       paddingBottom: 5,
-      height: "70vh"
+      height: "inherit"
     },
     containerStack: {
       overflowX: "scroll",
       overflowY: "hidden",
-      height: "90vh"
+      height: "75vh"
     },
     scrollablePaneContainer: {
       position: "relative",
@@ -115,9 +116,9 @@ const BPFCardsApp: React.SFC<IBusinessProcessBoardProps> = (
             break;
         }
         b.isLocal = true;
-        if(props.triggerStageChange){
+        if (props.triggerStageChange) {
           props.triggerStageChange(b);
-        }        
+        }
       }
       return b;
     });
