@@ -52,11 +52,12 @@ const BPFCardsApp: React.SFC<IBusinessProcessBoardProps> = (
     bpfStack: {
       paddingTop: 5,
       paddingBottom: 5,
-      height: "60vh"
+      height: "70vh"
     },
     containerStack: {
       overflowX: "scroll",
-      overflowY: "hidden"
+      overflowY: "hidden",
+      height: "90vh"
     },
     scrollablePaneContainer: {
       position: "relative",
